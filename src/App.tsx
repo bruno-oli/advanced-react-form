@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -31,6 +31,17 @@ const createUserFormSchema = z.object({
     .string()
     .nonempty("A senha é obrigatoria!")
     .min(6, "A senha precisa de no minimo 6 caracteries!"),
+  techs: z
+    .array(
+      z.object({
+        title: z.string().nonempty("O titulo é obrigatorio"),
+        knowledge: z.coerce
+          .number()
+          .min(1, "O valor minimo é 1")
+          .max(100, "O valor maximo é 100"),
+      })
+    )
+    .min(2, "Insira ao menos 2 tecnologias!"),
 });
 
 type CreateUserFormData = z.infer<typeof createUserFormSchema>;
@@ -40,17 +51,28 @@ function App() {
     register,
     handleSubmit,
     formState: { errors },
+    control,
   } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserFormSchema),
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "techs",
+  });
+
   const [output, setOutput] = useState("");
+
+  function addNewTech() {
+    append({ title: "", knowledge: 0 });
+  }
 
   function createUser(data: any) {
     setOutput(JSON.stringify(data, null, 2));
   }
 
   return (
-    <main className="h-screen bg-zinc-50 flex flex-col gap-10 items-center justify-center">
+    <main className="min-h-screen py-10 bg-zinc-50 flex flex-col gap-10 items-center justify-center">
       <form
         onSubmit={handleSubmit(createUser)}
         className="flex flex-col gap-4 w-full max-w-xs"
@@ -63,7 +85,7 @@ function App() {
             {...register("name")}
           />
           {errors.name && (
-            <span className="text-red-500">{errors.name.message}</span>
+            <span className="text-red-500 text-sm">{errors.name.message}</span>
           )}
         </div>
 
@@ -75,7 +97,7 @@ function App() {
             {...register("email")}
           />
           {errors.email && (
-            <span className="text-red-500">{errors.email.message}</span>
+            <span className="text-red-500 text-sm">{errors.email.message}</span>
           )}
         </div>
 
@@ -87,7 +109,56 @@ function App() {
             className="border-zinc-200 shadow-sm rounded h-10 px-3"
           />
           {errors.password && (
-            <span className="text-red-500">{errors.password.message}</span>
+            <span className="text-red-500 text-sm">
+              {errors.password.message}
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="" className="flex items-center justify-between">
+            Tecnologias
+            <button
+              type="button"
+              onClick={addNewTech}
+              className="text-emerald-500 text-sm"
+            >
+              Adicionar
+            </button>
+          </label>
+          {fields.map((field, index) => {
+            return (
+              <div className="flex gap-2" key={field.id}>
+                <div className="flex flex-1 flex-col gap-1">
+                  <input
+                    type="text"
+                    {...register(`techs.${index}.title`)}
+                    className="border-zinc-200 shadow-sm rounded h-10 px-3"
+                  />
+                  {errors.techs?.[index]?.title && (
+                    <span className="text-red-500 text-sm">
+                      {errors.techs?.[index]?.title?.message}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1 flex-1">
+                  <input
+                    type="number"
+                    {...register(`techs.${index}.knowledge`)}
+                    className="border-zinc-200 w-16 shadow-sm rounded h-10 px-3"
+                  />
+                  {errors.techs?.[index]?.knowledge && (
+                    <span className="text-red-500 text-sm">
+                      {errors.techs?.[index]?.knowledge?.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {errors.techs && (
+            <span className="text-red-500 text-sm">{errors.techs.message}</span>
           )}
         </div>
 
