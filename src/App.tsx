@@ -67,7 +67,7 @@ function App() {
     append({ title: "", knowledge: 0 });
   }
 
-  function createUser(data: any) {
+  function createUser(data: CreateUserFormData) {
     setOutput(JSON.stringify(data, null, 2));
   }
 
